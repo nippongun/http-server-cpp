@@ -67,11 +67,46 @@ class HTTPRequest
 public:
   HTTPRequest(string request_line)
   {
-    auto tokens = split(request_line, CRLF);
-    auto status = split(tokens[0], " ");
+    tokens = split(request_line, CRLF);
+    status = split(tokens[0], " ");
     target = status[1];
   }
   string target;
+  vector<string> tokens;
+  vector<string> status;
+};
+class ResponseWrapper
+{
+public:
+  string header;
+  void parse(HTTPResponse &response, HTTPRequest &request) {};
+};
+
+class UserAgent : public ResponseWrapper
+{
+public:
+  string header = "/user-agent/";
+  void parse(HTTPResponse &response, HTTPRequest &request)
+  {
+    string key = "User-Agent: ";
+    auto echo = request.tokens[2].substr(key.size());
+    response.addHeader("Content-Type", "text/plain");
+    response.addHeader("Content-Length", std::to_string(echo.length()));
+    response.addBody(echo);
+  }
+};
+
+class Echo : public ResponseWrapper
+{
+public:
+  string header = "/echo/";
+  void parse(HTTPResponse &response, HTTPRequest &request)
+  {
+    auto echo = request.target.substr(6);
+    response.addHeader("Content-Type", "text/plain");
+    response.addHeader("Content-Length", std::to_string(echo.size()));
+    response.addBody(echo);
+  }
 };
 
 int main(int argc, char **argv)
@@ -124,6 +159,8 @@ int main(int argc, char **argv)
 
   std::cout << "Waiting for a client to connect...\n";
 
+  vector<ResponseWrapper *> wrappers = {new UserAgent(), new Echo()};
+
   int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, (socklen_t *)&client_addr_len);
 
   char buffer[1024];
@@ -133,22 +170,21 @@ int main(int argc, char **argv)
 
   HTTPResponse response;
 
-  if (request.target == "/" || request.target.starts_with("/echo/"))
+  bool ok = false;
+  for (auto wrapper : wrappers)
   {
-
-    response = HTTPResponse(200, "OK");
+    if (request.target.starts_with(wrapper->header))
+    {
+      response = HTTPResponse(200, "OK");
+      wrapper->parse(response, request);
+      ok = true;
+      break;
+    }
   }
-  else
+
+  if (ok == false)
   {
     response = HTTPResponse(404, "Not Found");
-  }
-
-  if (request.target.starts_with("/echo/"))
-  {
-    auto echo = request.target.substr(6);
-    response.addHeader("Content-Type", "text/plain");
-    response.addHeader("Content-Length", std::to_string(echo.size()));
-    response.addBody(echo);
   }
 
   auto sent = send(client_fd, response.toString().data(), response.toString().size(), 0);
