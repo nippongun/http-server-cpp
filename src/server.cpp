@@ -79,14 +79,18 @@ class ResponseWrapper
 {
 public:
   string header;
-  void parse(HTTPResponse &response, HTTPRequest &request) {};
+  virtual ~ResponseWrapper() = default;
+  virtual void parse(HTTPResponse &response, HTTPRequest &request) = 0;
 };
 
 class UserAgent : public ResponseWrapper
 {
 public:
-  string header = "/user-agent/";
-  void parse(HTTPResponse &response, HTTPRequest &request)
+  UserAgent()
+  {
+    header = "/user-agent/";
+  }
+  void parse(HTTPResponse &response, HTTPRequest &request) override
   {
     string key = "User-Agent: ";
     auto echo = request.tokens[2].substr(key.size());
@@ -99,10 +103,14 @@ public:
 class Echo : public ResponseWrapper
 {
 public:
-  string header = "/echo/";
-  void parse(HTTPResponse &response, HTTPRequest &request)
+  Echo()
+  {
+    header = "/echo/";
+  }
+  void parse(HTTPResponse &response, HTTPRequest &request) override
   {
     auto echo = request.target.substr(6);
+    cout << echo << endl;
     response.addHeader("Content-Type", "text/plain");
     response.addHeader("Content-Length", std::to_string(echo.size()));
     response.addBody(echo);
@@ -175,6 +183,7 @@ int main(int argc, char **argv)
   {
     if (request.target.starts_with(wrapper->header))
     {
+      cout << "Found: " << wrapper->header << "\n";
       response = HTTPResponse(200, "OK");
       wrapper->parse(response, request);
       ok = true;
@@ -184,6 +193,7 @@ int main(int argc, char **argv)
 
   if (ok == false)
   {
+    cout << "Not found: " << request.target << "\n";
     response = HTTPResponse(404, "Not Found");
   }
 
