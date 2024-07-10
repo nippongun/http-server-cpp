@@ -178,23 +178,29 @@ int main(int argc, char **argv)
 
   HTTPResponse response;
 
-  bool ok = false;
-  for (auto wrapper : wrappers)
+  if (request.target == "/")
   {
-    if (request.target.starts_with(wrapper->header))
-    {
-      cout << "Found: " << wrapper->header << "\n";
-      response = HTTPResponse(200, "OK");
-      wrapper->parse(response, request);
-      ok = true;
-      break;
-    }
+    response = HTTPResponse(200, "OK");
   }
-
-  if (ok == false)
+  else
   {
-    cout << "Not found: " << request.target << "\n";
-    response = HTTPResponse(404, "Not Found");
+    bool ok = false;
+    for (auto wrapper : wrappers)
+    {
+      if (request.target.starts_with(wrapper->header))
+      {
+        cout << "Found: " << wrapper->header << "\n";
+        response = HTTPResponse(200, "OK");
+        wrapper->parse(response, request);
+        ok = true;
+        break;
+      }
+    }
+    if (ok == false)
+    {
+      cout << "Not found: " << request.target << "\n";
+      response = HTTPResponse(404, "Not Found");
+    }
   }
 
   auto sent = send(client_fd, response.toString().data(), response.toString().size(), 0);
