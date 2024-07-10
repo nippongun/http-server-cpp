@@ -1,12 +1,58 @@
 #include <iostream>
 #include <cstdlib>
 #include <string>
+#include <sstream>
 #include <cstring>
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <vector>
+static const std::string HTTP_VER = "HTTP/1.1";
+static const std::string CRLF = "\r\n";
+
+using namespace std;
+
+vector<string> split(const string &data, string delimiter)
+{
+  size_t start = 0;
+  size_t position = 0;
+  vector<string> result;
+  while ((position = data.find(delimiter, start)) != string::npos)
+  {
+    result.push_back(data.substr(start, position - start));
+    start = position + delimiter.length();
+  }
+  return result;
+}
+
+class HTTPResponse
+{
+public:
+  HTTPResponse(int status_code, string reason) : status_code(status_code), reason(move(reason)) {}
+  string toString()
+  {
+    return HTTP_VER + " " + std::to_string(status_code) + " " + reason + CRLF;
+  }
+
+private:
+  int status_code;
+  string reason;
+};
+
+class HTTPRequest
+{
+public:
+  HTTPRequest(string request_line)
+  {
+    auto tokens = split(request_line, CRLF);
+    auto status = split(tokens[0], " ");
+    target = status[1];
+  }
+  string target;
+};
 
 int main(int argc, char **argv)
 {
@@ -59,9 +105,25 @@ int main(int argc, char **argv)
   std::cout << "Waiting for a client to connect...\n";
 
   int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, (socklen_t *)&client_addr_len);
-  std::string response = "HTTP/1.1 200 OK\r\n\r\n";
-  send(client_fd, response.c_str(), response.length(), 0);
-  std::cout << "Client connected\n";
+
+  char buffer[1024];
+  char path[512];
+  int bytes_read = recv(client_fd, buffer, sizeof(buffer), 0);
+  cout << string(buffer, 0, bytes_read) << "\n";
+  auto request = HTTPRequest(string(buffer, 0, bytes_read));
+  string response;
+
+  if (request.target == "/")
+  {
+    response = HTTPResponse(200, "OK").toString();
+  }
+  else
+  {
+    response = HTTPResponse(404, "Not Found").toString();
+  }
+
+  char *request_line = strtok(buffer, " ");
+  request_line = strtok(NULL, " ");
 
   close(server_fd);
 
