@@ -124,7 +124,8 @@ int main(int argc, char **argv)
 
   char *request_line = strtok(buffer, " ");
   request_line = strtok(NULL, " ");
-
+  auto sent = send(client_fd, response.c_str(), response.size(), 0);
+  cout << "Send: " << sent << "\n";
   close(server_fd);
 
   return 0;
