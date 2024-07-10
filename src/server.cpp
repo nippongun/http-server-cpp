@@ -1,7 +1,6 @@
 #include <iostream>
 #include <cstdlib>
 #include <string>
-#include <sstream>
 #include <cstring>
 
 #include <unistd.h>
@@ -10,6 +9,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <vector>
+#include <unordered_map>
 static const std::string HTTP_VER = "HTTP/1.1";
 static const std::string CRLF = "\r\n";
 
@@ -31,15 +31,35 @@ vector<string> split(const string &data, string delimiter)
 class HTTPResponse
 {
 public:
+  HTTPResponse() = default;
   HTTPResponse(int status_code, string reason) : status_code(status_code), reason(move(reason)) {}
   string toString()
   {
-    return HTTP_VER + " " + std::to_string(status_code) + " " + reason + CRLF + CRLF;
+    string response = HTTP_VER + " " + std::to_string(status_code) + " " + reason + CRLF;
+
+    for (auto &[name, value] : headers)
+    {
+      response += name + ": " + value + CRLF;
+    }
+    response += CRLF;
+    response += body;
+    return response;
+  }
+
+  void addHeader(const string &name, const string &value)
+  {
+    headers[name] = value;
+  }
+  void addBody(const string &body)
+  {
+    this->body += body;
   }
 
 private:
-  int status_code;
+  int status_code{};
   string reason;
+  unordered_map<string, string> headers;
+  string body;
 };
 
 class HTTPRequest
@@ -107,24 +127,31 @@ int main(int argc, char **argv)
   int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, (socklen_t *)&client_addr_len);
 
   char buffer[1024];
-  char path[512];
   int bytes_read = recv(client_fd, buffer, sizeof(buffer), 0);
   cout << string(buffer, 0, bytes_read) << "\n";
   auto request = HTTPRequest(string(buffer, 0, bytes_read));
-  string response;
 
-  if (request.target == "/")
+  HTTPResponse response;
+
+  if (request.target == "/echo/" || request.target.starts_with("/echo/"))
   {
-    response = HTTPResponse(200, "OK").toString();
+
+    response = HTTPResponse(200, "OK");
   }
   else
   {
-    response = HTTPResponse(404, "Not Found").toString();
+    response = HTTPResponse(404, "Not Found");
   }
 
-  char *request_line = strtok(buffer, " ");
-  request_line = strtok(NULL, " ");
-  auto sent = send(client_fd, response.c_str(), response.size(), 0);
+  if (request.target.starts_with("/echo/"))
+  {
+    auto echo = request.target.substr(6);
+    response.addHeader("Content-Type", "text/plain");
+    response.addHeader("Content-Length", std::to_string(echo.size()));
+    response.addBody(echo);
+  }
+
+  auto sent = send(client_fd, response.toString().data(), response.toString().size(), 0);
   cout << "Send: " << sent << "\n";
   close(server_fd);
 
