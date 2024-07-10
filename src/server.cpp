@@ -88,7 +88,7 @@ class UserAgent : public ResponseWrapper
 public:
   UserAgent()
   {
-    header = "/user-agent/";
+    header = "/user-agent";
   }
   void parse(HTTPResponse &response, HTTPRequest &request) override
   {
