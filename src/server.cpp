@@ -133,7 +133,7 @@ int main(int argc, char **argv)
 
   HTTPResponse response;
 
-  if (request.target == "/echo/" || request.target.starts_with("/echo/"))
+  if (request.target == "/" || request.target.starts_with("/echo/"))
   {
 
     response = HTTPResponse(200, "OK");
