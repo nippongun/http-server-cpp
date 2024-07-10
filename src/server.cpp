@@ -34,7 +34,7 @@ public:
   HTTPResponse(int status_code, string reason) : status_code(status_code), reason(move(reason)) {}
   string toString()
   {
-    return HTTP_VER + " " + std::to_string(status_code) + " " + reason + CRLF;
+    return HTTP_VER + " " + std::to_string(status_code) + " " + reason + CRLF + CRLF;
   }
 
 private:
