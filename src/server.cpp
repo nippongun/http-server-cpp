@@ -181,7 +181,7 @@ public:
       string fileContent = readFile(dir + file);
       cout << fileContent << endl;
       response.setStatusCode(200);
-      response.addHeader("Content-Type", "text/plain");
+      response.addHeader("Content-Type", "application/octet-stream");
       response.addHeader("Content-Length", std::to_string(fileContent.size()));
       response.addBody(fileContent);
     }
