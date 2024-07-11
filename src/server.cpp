@@ -168,7 +168,7 @@ class File : public ResponseWrapper
 public:
   File()
   {
-    header = "/file/";
+    header = "/files/";
   }
   void parse(HTTPResponse &response, HTTPRequest &request) override
   {
