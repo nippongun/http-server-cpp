@@ -167,7 +167,7 @@ public:
     catch (const exception &e)
     {
       response.setStatusCode(400);
-      response.addBody("Bad Request");
+      response.addReason("Bad Request");
     }
   }
 };
@@ -197,7 +197,7 @@ public:
     {
       cout << e.what() << endl;
       response.setStatusCode(404);
-      response.addBody("Not Found");
+      response.addReason("Not Found");
     }
   }
 
