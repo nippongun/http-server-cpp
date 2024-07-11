@@ -178,18 +178,9 @@ public:
     {
       string fileContent = readFile(file);
 
-      if (fileContent.empty())
-      {
-        response.setStatusCode(404);
-        response.addBody("Not Found");
-        return;
-      }
-      else
-      {
-        response.addHeader("Content-Type", "text/plain");
-        response.addHeader("Content-Length", std::to_string(fileContent.size()));
-        response.addBody(fileContent);
-      }
+      response.addHeader("Content-Type", "text/plain");
+      response.addHeader("Content-Length", std::to_string(fileContent.size()));
+      response.addBody(fileContent);
     }
     catch (const runtime_error &e)
     {
