@@ -187,6 +187,7 @@ public:
     }
     catch (const runtime_error &e)
     {
+      cout << e.what() << endl;
       response.setStatusCode(404);
       response.addBody("Not Found");
     }
