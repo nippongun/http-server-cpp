@@ -6,6 +6,9 @@
 #include <unordered_map>
 #include <thread>
 
+#include <fstream>
+#include <sstream>
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -57,6 +60,11 @@ public:
     this->body += body;
   }
 
+  void setStatusCode(int status_code)
+  {
+    this->status_code = status_code;
+  }
+
 private:
   int status_code{};
   string reason;
@@ -80,9 +88,9 @@ public:
 class ResponseWrapper
 {
 public:
-  string header;
   virtual ~ResponseWrapper() = default;
   virtual void parse(HTTPResponse &response, HTTPRequest &request) = 0;
+  string header;
 };
 
 class UserAgent : public ResponseWrapper
@@ -112,11 +120,73 @@ public:
   }
   void parse(HTTPResponse &response, HTTPRequest &request) override
   {
-    auto echo = request.target.substr(6);
-    cout << "Echo: " << echo << endl;
-    response.addHeader("Content-Type", "text/plain");
-    response.addHeader("Content-Length", std::to_string(echo.size()));
-    response.addBody(echo);
+    try
+    {
+      if (request.target.size() < header.size())
+      {
+        throw invalid_argument("Invalid request");
+      }
+
+      auto echo = request.target.substr(header.size());
+      cout << "Echo: " << echo << endl;
+      response.addHeader("Content-Type", "text/plain");
+      response.addHeader("Content-Length", std::to_string(echo.size()));
+      response.addBody(echo);
+    }
+    catch (const exception &e)
+    {
+      response.setStatusCode(400);
+      response.addBody("Bad Request");
+    }
+  }
+};
+
+class File : public ResponseWrapper
+{
+public:
+  File()
+  {
+    header = "/file/";
+  }
+  void parse(HTTPResponse &response, HTTPRequest &request) override
+  {
+    auto file = request.target.substr(header.size());
+    cout << "File: " << file << endl;
+    try
+    {
+      string fileContent = readFile(file);
+
+      if (fileContent.empty())
+      {
+        response.setStatusCode(404);
+        response.addBody("Not Found");
+        return;
+      }
+      else
+      {
+        response.addHeader("Content-Type", "text/plain");
+        response.addHeader("Content-Length", std::to_string(fileContent.size()));
+        response.addBody(fileContent);
+      }
+    }
+    catch (const runtime_error &e)
+    {
+      response.setStatusCode(404);
+      response.addBody("Not Found");
+    }
+  }
+
+private:
+  string readFile(const std::string &filename)
+  {
+    std::ifstream file(filename);
+    if (!file.is_open())
+    {
+      throw std::runtime_error("Could not open file: " + filename);
+    }
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
   }
 };
 class Server
@@ -126,6 +196,7 @@ public:
   {
     wrappers.push_back(new UserAgent());
     wrappers.push_back(new Echo());
+    wrappers.push_back(new File());
   }
   int handle_http(int client_fd, struct sockaddr_in client_addr)
   {
