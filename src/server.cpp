@@ -232,6 +232,7 @@ public:
       bool ok = false;
       for (auto wrapper : wrappers)
       {
+        ok = false;
         if (request.target.starts_with(wrapper->header))
         {
           cout << "Found: " << wrapper->header << "\n";
