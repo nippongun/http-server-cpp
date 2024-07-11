@@ -2,14 +2,16 @@
 #include <cstdlib>
 #include <string>
 #include <cstring>
+#include <vector>
+#include <unordered_map>
+#include <thread>
 
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <vector>
-#include <unordered_map>
+
 static const std::string HTTP_VER = "HTTP/1.1";
 static const std::string CRLF = "\r\n";
 
@@ -94,6 +96,7 @@ public:
   {
     string key = "User-Agent: ";
     auto echo = request.tokens[2].substr(key.size());
+    cout << "UserAgent: " << echo << endl;
     response.addHeader("Content-Type", "text/plain");
     response.addHeader("Content-Length", std::to_string(echo.length()));
     response.addBody(echo);
@@ -110,13 +113,62 @@ public:
   void parse(HTTPResponse &response, HTTPRequest &request) override
   {
     auto echo = request.target.substr(6);
-    cout << echo << endl;
+    cout << "Echo: " << echo << endl;
     response.addHeader("Content-Type", "text/plain");
     response.addHeader("Content-Length", std::to_string(echo.size()));
     response.addBody(echo);
   }
 };
+class Server
+{
+public:
+  Server()
+  {
+    wrappers.push_back(new UserAgent());
+    wrappers.push_back(new Echo());
+  }
+  int handle_http(int client_fd, struct sockaddr_in client_addr)
+  {
+    char buffer[1024];
+    int bytes_read = recv(client_fd, buffer, sizeof(buffer), 0);
+    cout << string(buffer, 0, bytes_read) << "\n";
+    auto request = HTTPRequest(string(buffer, 0, bytes_read));
 
+    HTTPResponse response;
+
+    if (request.target == "/")
+    {
+      response = HTTPResponse(200, "OK");
+    }
+    else
+    {
+      bool ok = false;
+      for (auto wrapper : wrappers)
+      {
+        if (request.target.starts_with(wrapper->header))
+        {
+          cout << "Found: " << wrapper->header << "\n";
+          response = HTTPResponse(200, "OK");
+          wrapper->parse(response, request);
+          ok = true;
+          break;
+        }
+      }
+      if (ok == false)
+      {
+        cout << "Not found: " << request.target << "\n";
+        response = HTTPResponse(404, "Not Found");
+      }
+    }
+    auto sent = send(client_fd, response.toString().data(), response.toString().size(), 0);
+    cout << "Send: " << sent << "\n";
+    close(client_fd);
+    return 0;
+  }
+
+private:
+  vector<ResponseWrapper *> wrappers;
+};
 int main(int argc, char **argv)
 {
   // Flush after every std::cout / std::cerr
@@ -167,44 +219,27 @@ int main(int argc, char **argv)
 
   std::cout << "Waiting for a client to connect...\n";
 
-  vector<ResponseWrapper *> wrappers = {new UserAgent(), new Echo()};
+  Server server;
 
-  int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, (socklen_t *)&client_addr_len);
-
-  char buffer[1024];
-  int bytes_read = recv(client_fd, buffer, sizeof(buffer), 0);
-  cout << string(buffer, 0, bytes_read) << "\n";
-  auto request = HTTPRequest(string(buffer, 0, bytes_read));
-
-  HTTPResponse response;
-
-  if (request.target == "/")
+  while (1)
   {
-    response = HTTPResponse(200, "OK");
-  }
-  else
-  {
-    bool ok = false;
-    for (auto wrapper : wrappers)
+    int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, (socklen_t *)&client_addr_len);
+    cout << "Client connected\n";
+
+    try
     {
-      if (request.target.starts_with(wrapper->header))
-      {
-        cout << "Found: " << wrapper->header << "\n";
-        response = HTTPResponse(200, "OK");
-        wrapper->parse(response, request);
-        ok = true;
-        break;
-      }
+      // Capture server by reference safely within the lambda context
+      std::thread th([&server, client_fd, client_addr]()
+                     { server.handle_http(client_fd, client_addr); });
+      th.detach();
     }
-    if (ok == false)
+    catch (const std::exception &e)
     {
-      cout << "Not found: " << request.target << "\n";
-      response = HTTPResponse(404, "Not Found");
-    }
+      std::cerr << "Failed to create thread: " << e.what() << std::endl;
+      close(client_fd); // Ensure client_fd is closed if thread creation fails
+    };
   }
 
-  auto sent = send(client_fd, response.toString().data(), response.toString().size(), 0);
-  cout << "Send: " << sent << "\n";
   close(server_fd);
 
   return 0;
