@@ -177,7 +177,7 @@ public:
     try
     {
       string fileContent = readFile(file);
-
+      cout << fileContent << endl;
       response.addHeader("Content-Type", "text/plain");
       response.addHeader("Content-Length", std::to_string(fileContent.size()));
       response.addBody(fileContent);
