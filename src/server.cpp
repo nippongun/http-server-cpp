@@ -261,7 +261,7 @@ private:
     cout << "Hello!" << request.body << endl;
     outfile << request.body;
     outfile.close();
-    response.setStatusCode(200);
+    response.setStatusCode(201);
     response.addReason("CREATED");
     return 0;
   }
