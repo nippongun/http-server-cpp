@@ -122,6 +122,7 @@ public:
 
       cout << "UserAgent: " << echo << endl;
       response.addHeader("Content-Type", "text/plain");
+      response.setStatusCode(200);
       response.addHeader("Content-Length", std::to_string(echo.length()));
       response.addBody(echo);
     }
@@ -151,6 +152,7 @@ public:
 
       auto echo = request.target.substr(header.size());
       cout << "Echo: " << echo << endl;
+      response.setStatusCode(200);
       response.addHeader("Content-Type", "text/plain");
       response.addHeader("Content-Length", std::to_string(echo.size()));
       response.addBody(echo);
@@ -178,6 +180,7 @@ public:
     {
       string fileContent = readFile(file);
       cout << fileContent << endl;
+      response.setStatusCode(200);
       response.addHeader("Content-Type", "text/plain");
       response.addHeader("Content-Length", std::to_string(fileContent.size()));
       response.addBody(fileContent);
