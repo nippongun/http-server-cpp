@@ -65,6 +65,11 @@ public:
     this->status_code = status_code;
   }
 
+  void addReason(const string &reason)
+  {
+    this->reason = reason;
+  }
+
 private:
   int status_code{};
   string reason;
@@ -124,12 +129,13 @@ public:
       response.addHeader("Content-Type", "text/plain");
       response.setStatusCode(200);
       response.addHeader("Content-Length", std::to_string(echo.length()));
+      response.addReason("OK");
       response.addBody(echo);
     }
     catch (const exception &e)
     {
       response.setStatusCode(400);
-      response.addBody("Bad Request: " + std::string(e.what()));
+      response.addReason("Bad Request: " + std::string(e.what()));
     }
   }
 };
@@ -155,6 +161,7 @@ public:
       response.setStatusCode(200);
       response.addHeader("Content-Type", "text/plain");
       response.addHeader("Content-Length", std::to_string(echo.size()));
+      response.addReason("OK");
       response.addBody(echo);
     }
     catch (const exception &e)
@@ -183,6 +190,7 @@ public:
       response.setStatusCode(200);
       response.addHeader("Content-Type", "application/octet-stream");
       response.addHeader("Content-Length", std::to_string(fileContent.size()));
+      response.addReason("OK");
       response.addBody(fileContent);
     }
     catch (const runtime_error &e)
@@ -237,7 +245,7 @@ public:
         if (request.target.starts_with(wrapper->header))
         {
           cout << "Found: " << wrapper->header << "\n";
-          response = HTTPResponse(200, "OK");
+          response = HTTPResponse();
           wrapper->parse(response, request);
           ok = true;
           break;
