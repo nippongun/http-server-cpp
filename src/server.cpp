@@ -19,7 +19,7 @@ static const std::string HTTP_VER = "HTTP/1.1";
 static const std::string CRLF = "\r\n";
 
 using namespace std;
-
+string dir;
 vector<string> split(const string &data, string delimiter)
 {
   size_t start = 0;
@@ -178,7 +178,7 @@ public:
     cout << "File: " << file << endl;
     try
     {
-      string fileContent = readFile(file);
+      string fileContent = readFile(dir + file);
       cout << fileContent << endl;
       response.setStatusCode(200);
       response.addHeader("Content-Type", "text/plain");
@@ -263,8 +263,6 @@ int main(int argc, char **argv)
   // Flush after every std::cout / std::cerr
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
-
-  string dir;
 
   if (argc == 3 && strcmp(argv[1], "--directory") == 0)
   {
