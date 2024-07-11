@@ -20,17 +20,19 @@ static const std::string CRLF = "\r\n";
 
 using namespace std;
 string dir;
-vector<string> split(const string &data, string delimiter)
+vector<string> split(const string &str, const string &delimiter)
 {
+  vector<string> tokens;
   size_t start = 0;
-  size_t position = 0;
-  vector<string> result;
-  while ((position = data.find(delimiter, start)) != string::npos)
+  size_t end = str.find(delimiter);
+  while (end != string::npos)
   {
-    result.push_back(data.substr(start, position - start));
-    start = position + delimiter.length();
+    tokens.push_back(str.substr(start, end - start));
+    start = end + delimiter.length();
+    end = str.find(delimiter, start);
   }
-  return result;
+  tokens.push_back(str.substr(start));
+  return tokens;
 }
 
 class HTTPResponse
@@ -82,11 +84,33 @@ class HTTPRequest
 public:
   HTTPRequest(string request_line)
   {
-    tokens = split(request_line, CRLF);
+    size_t header_end = request_line.find(CRLF + CRLF);
+
+    if (header_end == string::npos)
+    {
+      throw invalid_argument("Invalid HTTP request: no header-body delimiter");
+    }
+
+    string header_section = request_line.substr(0, header_end);
+    body = request_line.substr(header_end + 4);
+
+    tokens = split(header_section, CRLF);
     status = split(tokens[0], " ");
-    target = status[1];
+
+    if (status.size() > 1)
+    {
+      target = status[1];
+    }
+    else
+    {
+      target = "/";
+    }
+
+    method = status[0];
   }
   string target;
+  string method;
+  string body;
   vector<string> tokens;
   vector<string> status;
 };
@@ -181,17 +205,21 @@ public:
   }
   void parse(HTTPResponse &response, HTTPRequest &request) override
   {
-    auto file = request.target.substr(header.size());
-    cout << "File: " << file << endl;
     try
     {
-      string fileContent = readFile(dir + file);
-      cout << fileContent << endl;
-      response.setStatusCode(200);
-      response.addHeader("Content-Type", "application/octet-stream");
-      response.addHeader("Content-Length", std::to_string(fileContent.size()));
-      response.addReason("OK");
-      response.addBody(fileContent);
+
+      if (request.method == "GET")
+      {
+        handle_get(response, request);
+      }
+      else if (request.method == "POST")
+      {
+        handle_post(response, request);
+      }
+      else
+      {
+        throw invalid_argument("Invalid request");
+      }
     }
     catch (const runtime_error &e)
     {
@@ -213,6 +241,30 @@ private:
     buffer << file.rdbuf();
     return buffer.str();
   }
+
+  int handle_get(HTTPResponse &response, HTTPRequest &request)
+  {
+    auto file = request.target.substr(header.size());
+    string fileContent = readFile(dir + file);
+    cout << fileContent << endl;
+    response.setStatusCode(200);
+    response.addHeader("Content-Type", "application/octet-stream");
+    response.addHeader("Content-Length", std::to_string(fileContent.size()));
+    response.addReason("OK");
+    response.addBody(fileContent);
+    return 0;
+  }
+  int handle_post(HTTPResponse &response, HTTPRequest &request)
+  {
+    auto file = request.target.substr(header.size());
+    ofstream outfile(dir + file);
+    cout << "Hello!" << request.body << endl;
+    outfile << request.body;
+    outfile.close();
+    response.setStatusCode(200);
+    response.addReason("CREATED");
+    return 0;
+  }
 };
 class Server
 {
@@ -229,7 +281,6 @@ public:
     int bytes_read = recv(client_fd, buffer, sizeof(buffer), 0);
     cout << string(buffer, 0, bytes_read) << "\n";
     auto request = HTTPRequest(string(buffer, 0, bytes_read));
-
     HTTPResponse response;
 
     if (request.target == "/")
@@ -260,6 +311,7 @@ public:
     auto sent = send(client_fd, response.toString().data(), response.toString().size(), 0);
     cout << "Send: " << sent << "\n";
     close(client_fd);
+
     return 0;
   }
 
