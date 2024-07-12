@@ -17,7 +17,7 @@ class Server
 public:
     int handle_http(int client_fd, struct sockaddr_in client_addr)
     {
-        initEndpoints(dir);
+
         char buffer[1024];
         int bytes_read = recv(client_fd, buffer, sizeof(buffer), 0);
         cout << string(buffer, 0, bytes_read) << "\n";
