@@ -26,7 +26,6 @@ public:
             if (request.headers["Accept-Encoding"].find("gzip") != string::npos)
             {
                 echo = compressString(echo);
-                cout << "Compress: " << compress << endl;
                 response.addBody(echo);
                 response.addHeader("Content-Encoding", "gzip");
             }
