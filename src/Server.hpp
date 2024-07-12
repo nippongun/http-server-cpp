@@ -20,7 +20,7 @@ public:
 
         char buffer[1024];
         int bytes_read = recv(client_fd, buffer, sizeof(buffer), 0);
-        cout << string(buffer, 0, bytes_read) << "\n";
+        cout << "Buffer: " << string(buffer, 0, bytes_read) << "\n";
         auto request = HTTPRequest(string(buffer, 0, bytes_read));
         HTTPResponse response;
 
@@ -57,7 +57,6 @@ public:
     }
     int start(int port, string dir)
     {
-        // Flush after every std::cout / std::cerr
         initEndpoints(dir);
         int server_fd = socket(AF_INET, SOCK_STREAM, 0);
         if (server_fd < 0)
