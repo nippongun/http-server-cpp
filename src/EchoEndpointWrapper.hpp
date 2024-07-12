@@ -18,6 +18,7 @@ public:
             {
                 throw std::invalid_argument("Invalid request");
             }
+
             auto echo = request.target.substr(header.size());
             cout << "Echo: " << echo << endl;
             response.setStatusCode(200);
