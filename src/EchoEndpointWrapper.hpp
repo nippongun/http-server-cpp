@@ -72,6 +72,7 @@ public:
         {
             throw std::runtime_error("deflate failed");
         }
+
         return outstring;
     }
 };
