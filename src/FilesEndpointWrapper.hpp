@@ -15,6 +15,7 @@ public:
     }
     FilesEndpoint(string dir)
     {
+        header = "/files/";
         this->dir = dir;
     }
     void parse(HTTPResponse &response, HTTPRequest &request) override
@@ -72,8 +73,8 @@ private:
     int handle_post(HTTPResponse &response, HTTPRequest &request)
     {
         auto file = request.target.substr(header.size());
-        ofstream outfile(dir + file);
-        cout << request.body << endl;
+        ofstream outfile{dir + file};
+        cout << "File:" << file << request.body << endl;
         outfile << request.body;
         outfile.close();
         response.setStatusCode(201);

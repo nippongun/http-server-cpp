@@ -15,7 +15,6 @@ using namespace std;
 class Server
 {
 public:
-    string dir;
     int handle_http(int client_fd, struct sockaddr_in client_addr)
     {
         char buffer[1024];
@@ -58,9 +57,7 @@ public:
     int start(int port, string dir)
     {
         // Flush after every std::cout / std::cerr
-
-        this->dir = dir;
-
+        initEndpoints(dir);
         int server_fd = socket(AF_INET, SOCK_STREAM, 0);
         if (server_fd < 0)
         {
@@ -100,8 +97,6 @@ public:
 
         std::cout << "Waiting for a client to connect...\n";
 
-        Server server;
-
         while (1)
         {
             int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, (socklen_t *)&client_addr_len);
@@ -110,8 +105,8 @@ public:
             try
             {
                 // Capture server by reference safely within the lambda context
-                std::thread th([&server, client_fd, client_addr]()
-                               { server.handle_http(client_fd, client_addr); });
+                std::thread th([&]()
+                               { handle_http(client_fd, client_addr); });
                 th.detach();
             }
             catch (const std::exception &e)
@@ -123,6 +118,13 @@ public:
 
         close(server_fd);
         return 0;
+    }
+
+    void initEndpoints(string dir)
+    {
+        wrappers.push_back(new UserAgentEndpoint());
+        wrappers.push_back(new EchoEndpoint());
+        wrappers.push_back(new FilesEndpoint(dir));
     }
 
     static Server &getInstance()
@@ -137,8 +139,5 @@ private:
     vector<EndpointWrapper *> wrappers;
     Server()
     {
-        wrappers.push_back(new UserAgentEndpoint());
-        wrappers.push_back(new EchoEndpoint());
-        wrappers.push_back(new FilesEndpoint(dir));
     }
 };
