@@ -104,10 +104,7 @@ public:
 
             try
             {
-                // Capture server by reference safely within the lambda context
-                std::thread th([&]()
-                               { handle_http(client_fd, client_addr); });
-                th.detach();
+                handle_http(client_fd, client_addr);
             }
             catch (const std::exception &e)
             {
