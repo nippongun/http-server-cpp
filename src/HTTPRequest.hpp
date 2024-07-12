@@ -37,11 +37,6 @@ public:
     {
         size_t header_end = request_line.find(CRLF + CRLF);
 
-        if (header_end == string::npos)
-        {
-            throw std::invalid_argument("Invalid HTTP request: no header-body delimiter");
-        }
-
         string header_section = request_line.substr(0, header_end);
         body = request_line.substr(header_end + 4);
 
