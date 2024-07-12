@@ -23,12 +23,11 @@ public:
             cout << "Echo: " << echo << endl;
             response.setStatusCode(200);
             response.addHeader("Content-Type", "text/plain");
-            response.addHeader("Content-Length", std::to_string(echo.size()));
             if (request.headers["Accept-Encoding"].find("gzip") != string::npos)
             {
-                auto compress = compressString(echo);
+                echo = compressString(echo);
                 cout << "Compress: " << compress << endl;
-                response.addBody(compress);
+                response.addBody(echo);
                 response.addHeader("Content-Encoding", "gzip");
             }
             else
@@ -36,6 +35,7 @@ public:
                 response.addBody(echo);
             }
             response.addReason("OK");
+            response.addHeader("Content-Length", std::to_string(echo.size()));
         }
         catch (const exception &e)
         {
