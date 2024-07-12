@@ -50,7 +50,7 @@ public:
             }
         }
         auto sent = send(client_fd, response.toString().data(), response.toString().size(), 0);
-        cout << "Send: " << sent << "\n";
+        cout << "Sent: " << response.toString() << "\n";
         close(client_fd);
 
         return 0;
