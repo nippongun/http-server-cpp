@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include "EndpointWrapper.hpp"
+#include <filesystem>
 
 class Server;
 class FilesEndpoint : public EndpointWrapper
@@ -61,7 +62,9 @@ private:
     int handle_get(HTTPResponse &response, HTTPRequest &request)
     {
         auto file = request.target.substr(header.size());
-        string fileContent = readFile(dir + file);
+        filesystem::path directory{dir};
+        filesystem::path filePath{directory / file};
+        string fileContent = readFile(filePath);
         response.setStatusCode(200);
         response.addHeader("Content-Type", "application/octet-stream");
         response.addHeader("Content-Length", std::to_string(fileContent.size()));
@@ -72,8 +75,11 @@ private:
     int handle_post(HTTPResponse &response, HTTPRequest &request)
     {
         auto file = request.target.substr(header.size());
-        ofstream outfile(dir + file);
-        cout << "File: " << file << request.body << endl;
+        filesystem::path directory{dir};
+        filesystem::path filePath{directory / file};
+        ofstream outfile(filePath);
+
+        cout << "File " << (dir + file) << ": " << request.body << endl;
         outfile << request.body;
         outfile.close();
         response.setStatusCode(201);
