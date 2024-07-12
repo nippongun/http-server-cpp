@@ -4,13 +4,12 @@
 
 #include "Server.hpp"
 using namespace std;
-string dir;
 
 int main(int argc, char **argv)
 {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
-
+  string dir = "";
   if (argc == 3 && argv[1] == "--directory")
   {
     dir = argv[2];
