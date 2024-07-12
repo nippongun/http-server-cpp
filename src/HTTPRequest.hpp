@@ -26,6 +26,13 @@ vector<string> split(const string &str, const string &delimiter)
 class HTTPRequest
 {
 public:
+    string target;
+    string method;
+    string body;
+    vector<string> tokens;
+    vector<string> status;
+    unordered_map<string, string> headers;
+
     HTTPRequest(string request_line)
     {
         size_t header_end = request_line.find(CRLF + CRLF);
@@ -51,10 +58,24 @@ public:
         }
 
         method = status[0];
+
+        for (auto token : tokens)
+        {
+            vector<string> header = split(token, ": ");
+            if (header.size() == 2)
+            {
+                headers[header[0]] = header[1];
+            }
+        }
     }
-    string target;
-    string method;
-    string body;
-    vector<string> tokens;
-    vector<string> status;
+
+    bool containsHeader(const string &key) const
+    {
+        return headers.contains(key);
+    }
+
+    string getHeader(const string &key) const
+    {
+        return headers.at(key);
+    }
 };

@@ -23,6 +23,10 @@ public:
             response.setStatusCode(200);
             response.addHeader("Content-Type", "text/plain");
             response.addHeader("Content-Length", std::to_string(echo.size()));
+            if (request.containsHeader("Accept-Encoding") && request.getHeader("Accept-Encoding") == "gzip")
+            {
+                response.setHeader("Content-Encoding", "gzip");
+            }
             response.addReason("OK");
             response.addBody(echo);
         }
