@@ -24,7 +24,7 @@ public:
             response.setStatusCode(200);
             response.addHeader("Content-Type", "text/plain");
             response.addHeader("Content-Length", std::to_string(echo.size()));
-            if (request.containsHeader("Accept-Encoding") && request.headers["Accept-Encoding"].find("gzip") != string::npos)
+            if (request.headers["Accept-Encoding"].find("gzip") != string::npos)
             {
                 response.addBody(compressString(echo));
                 response.setHeader("Content-Encoding", "gzip");
