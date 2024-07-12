@@ -26,8 +26,10 @@ public:
             response.addHeader("Content-Length", std::to_string(echo.size()));
             if (request.headers["Accept-Encoding"].find("gzip") != string::npos)
             {
-                response.addBody(compressString(echo));
-                response.setHeader("Content-Encoding", "gzip");
+                auto compress = compressString(echo);
+                cout << compress << endl;
+                response.addBody(compress);
+                response.addHeader("Content-Encoding", "gzip");
             }
             else
             {

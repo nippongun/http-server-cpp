@@ -41,11 +41,6 @@ public:
         this->reason = reason;
     }
 
-    void setHeader(const string &name, const string &value)
-    {
-        headers[name] = value;
-    }
-
 private:
     int status_code{};
     string reason;
