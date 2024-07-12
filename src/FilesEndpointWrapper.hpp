@@ -62,7 +62,6 @@ private:
     {
         auto file = request.target.substr(header.size());
         string fileContent = readFile(dir + file);
-        cout << "File Content for " << file << ":" << fileContent << endl;
         response.setStatusCode(200);
         response.addHeader("Content-Type", "application/octet-stream");
         response.addHeader("Content-Length", std::to_string(fileContent.size()));
@@ -73,8 +72,8 @@ private:
     int handle_post(HTTPResponse &response, HTTPRequest &request)
     {
         auto file = request.target.substr(header.size());
-        ofstream outfile{dir + file};
-        cout << "File:" << file << request.body << endl;
+        ofstream outfile(dir + file);
+        cout << "File: " << file << request.body << endl;
         outfile << request.body;
         outfile.close();
         response.setStatusCode(201);
