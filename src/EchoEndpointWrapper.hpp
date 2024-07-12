@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <zlib.h>
 #include "EndpointWrapper.hpp"
 using namespace std;
 class EchoEndpoint : public EndpointWrapper
