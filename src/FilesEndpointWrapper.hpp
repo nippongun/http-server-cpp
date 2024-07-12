@@ -62,7 +62,7 @@ private:
     {
         auto file = request.target.substr(header.size());
         string fileContent = readFile(dir + file);
-        cout << fileContent << endl;
+        cout << "File Content for " << file << ":" << fileContent << endl;
         response.setStatusCode(200);
         response.addHeader("Content-Type", "application/octet-stream");
         response.addHeader("Content-Length", std::to_string(fileContent.size()));
