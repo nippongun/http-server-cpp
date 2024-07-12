@@ -1,39 +1,15 @@
 [![progress-banner](https://backend.codecrafters.io/progress/http-server/121c341e-b9dc-458f-9e5e-dd4e7aa5ae9a)](https://app.codecrafters.io/users/nippongun?r=2qF)
+This is a learning repository. I did the CodeCrafter challenge to build an HTTP server in C/C++ 20. 
 
-This is a starting point for C++ solutions to the
-["Build Your Own HTTP server" Challenge](https://app.codecrafters.io/courses/http-server/overview).
+## Design
+My approach was to separate the endpoints to their own respective Wrappers, allowing every endpoint to  The Server itself is self-contained ie singelton. 
 
-[HTTP](https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol) is the
-protocol that powers the web. In this challenge, you'll build a HTTP/1.1 server
-that is capable of serving multiple clients.
+## Learned
+I learned how to build an HTTP Server from scratch using various libraries. The course explained Web Sockets, TCP/UDP, gzip compression, REST, and generally HTTP.
+Moreover, I learned how to apply the learned knowledge using C++ 20. It introduced certain STL libraries such as socket.h, arpa/inet etc.
+For design, I learned how to keep code maintainable and modular.
 
-Along the way you'll learn about TCP servers,
-[HTTP request syntax](https://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html),
-and more.
+## What I would do differently
+I would have a look at the thread safety of the server. Additionally, the implementation would require more refactoring regarding try/catch.
+But more importantly I would redesign the server. Instead of a wrapper for every endpoint - which ultimately was shared by all threads - every thread (client) receives its own Dispatch stack (mapping an endpoint to a handler i.e. lambda function). This avoids OOP, reduces thread problems and is equally maintainable. Furthermore, the HTTP implementation is rather ad hoc and could benefit from a unified HTTP approach (collection of structs and enums).
 
-**Note**: If you're viewing this repo on GitHub, head over to
-[codecrafters.io](https://codecrafters.io) to try the challenge.
-
-# Passing the first stage
-
-The entry point for your HTTP server implementation is in `src/server.cpp`.
-Study and uncomment the relevant code, and push your changes to pass the first
-stage:
-
-```sh
-git add .
-git commit -m "pass 1st stage" # any msg
-git push origin master
-```
-
-Time to move on to the next stage!
-
-# Stage 2 & beyond
-
-Note: This section is for stages 2 and beyond.
-
-1. Ensure you have `cmake` installed locally
-1. Run `./your_server.sh` to run your program, which is implemented in
-   `src/server.cpp`.
-1. Commit your changes and run `git push origin master` to submit your solution
-   to CodeCrafters. Test output will be streamed to your terminal.
