@@ -52,7 +52,7 @@ public:
         }
         zstr.next_in = (Bytef *)s.data();
         zstr.avail_in = s.size();
-        int ret = 0;
+        int ret;
         char outbuffer[32768];
         string outstring;
         do
@@ -66,11 +66,12 @@ public:
             }
 
         } while (ret == Z_OK);
+
         deflateEnd(&zstr);
         if (ret != Z_STREAM_END)
         {
             throw std::runtime_error("deflate failed");
         }
-        return s.substr(0, zstr.total_out);
+        return outstring;
     }
 };
